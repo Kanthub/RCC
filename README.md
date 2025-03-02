@@ -1,2 +1,2 @@
 # RCC
-This is a Self-reviewing procedure of Solidity-Coding.
+This is a Self-Reviewing Procedure of Solidity-Coding.
