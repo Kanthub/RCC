@@ -1,0 +1,121 @@
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+contract StructExample {
+
+    struct Product {
+        uint id;
+        string name;
+        uint256 price;
+        uint256 stock;
+    }
+
+    struct Order {
+        uint256 orderId;        // 订单唯一标识符
+        address buyer;          // 买家地址
+        address seller;         // 卖家地址
+        uint256 amount;         // 订单金额（以 wei 为单位）
+        string itemDescription; // 商品描述
+        uint256 timestamp;      // 订单创建时间
+        bool isCompleted;       // 订单是否完成
+    }
+    mapping(uint256 => Order) public orders;
+    mapping(address => uint256[]) private userOrders;
+    uint256 public orderCount;
+
+    event OrderCreated(
+        uint256 orderId,
+        address indexed buyer,
+        address indexed seller,
+        uint256 amount,
+        string itemDescription,
+        uint256 timestamp
+    );
+
+    function createOrder(
+        address _seller,
+        uint256 _amount,
+        string calldata _itemDescription
+    ) external payable {
+        require(msg.value == _amount, "Sent value must match amount");
+        require(_seller != address(0) && _seller != msg.sender, "Invalid seller address");
+
+        // 生成新的订单 ID
+        uint256 newOrderId = orderCount;
+
+        // 创建订单结构体
+        orders[newOrderId] = Order({
+            orderId: newOrderId,
+            buyer: msg.sender,
+            seller: _seller,
+            amount: _amount,
+            itemDescription: _itemDescription,
+            timestamp: block.timestamp,
+            isCompleted: false
+        });
+
+        // 查询单个订单详情
+    function getOrder(uint256 _orderId) external view returns (Order memory) {
+        require(_orderId < orderCount, "Order ID does not exist");
+        return orders[_orderId];
+    }
+
+   // 查询用户的订单 ID 列表
+    function getUserOrderIds(address _user) external view returns (uint256[] memory) {
+        return userOrders[_user];
+    }
+
+    // 查询用户的订单详情数组
+    function getUserOrders(address _user) external view returns (Order[] memory) {
+        uint256[] memory orderIds = userOrders[_user];
+        Order[] memory userOrderDetails = new Order[](orderIds.length);
+
+        for (uint256 i = 0; i < orderIds.length; i++) {
+            userOrderDetails[i] = orders[orderIds[i]];
+        }
+        return userOrderDetails;
+    }
+
+    // 标记订单为已完成（仅限卖家）
+    function completeOrder(uint256 _orderId) external {
+        require(_orderId < orderCount, "Order ID does not exist");
+        Order storage order = orders[_orderId];
+        require(msg.sender == order.seller, "Only seller can complete the order");
+        require(!order.isCompleted, "Order already completed");
+
+        order.isCompleted = true;
+        payable(order.seller).transfer(order.amount); // 将金额转给卖家
+    }
+
+        // 记录用户订单
+        userOrders[msg.sender].push(newOrderId);
+        userOrders[_seller].push(newOrderId);
+
+        // 更新订单计数器
+        orderCount++;
+
+        // 触发事件
+        emit OrderCreated(newOrderId, msg.sender, _seller, _amount, _itemDescription, block.timestamp);
+    }
+
+    mapping(uint256 => Product) public products;
+    uint256 public productCount;
+
+    function addProduct(string memory _name, uint256 _price, uint256 _stock) public {
+        productCount++;
+        products[productCount] = Product(productCount, _name, _price, _stock);
+    }
+
+    function updateProductStock(uint _productId, uint _newStock) public {
+        Product storage product = products[_productId];
+        product.stock = _newStock;
+    }
+
+    function getProduct(uint _productId) public view returns (string memory, uint, uint) {
+        Product storage product = products[_productId];
+        return (product.name, product.price, product.stock);
+    }
+}
+```
