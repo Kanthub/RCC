@@ -1,0 +1,53 @@
+#### **数据存储**
+
+在sol语言中 有storage memory calldata 三种数据数据存储结构
+storage是长期存储，最消耗gas,
+memory是短期存储，消耗较少gas,
+calldata通常用于外部函数调用时的参数传递,不可修改，最节省gas。
+
+#### **引用类型的赋值规则**
+
+**storage赋值给memory / 或 memory赋值给storage**
+  创建一份独立的拷贝；
+
+**storage赋值给storage / 或 memory赋值给memory**
+  只创建一个引用，指向相同的存储位置，
+  更改其中一个变量会影响所有指向该数据的其他变量。
+
+**合约演示**
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity 0.8.28;
+
+contract ReferingExample {
+    uint256[] public data;
+
+    // 将memory数组复制到storage中，产生较高gas
+    function updateData(uint256[] memory _newdata) public {
+        data = _newdata;
+    }
+
+    // view函数，不消耗gas
+    function getData() public view returns(uint256[] memory) {
+        return data;
+    }
+
+    // 改变storage数组的数据，消耗较高gas
+    function modifyStorageData(uint256 _index, uint256 _value) public {
+        if (_index >= data.length) {
+            revert ("Index out of range");
+        }
+        data[_index] = _value;
+    }
+
+    // 在 memory 中修改数据，不涉及持久化存储，因此 Gas 消耗较小
+    function modifyMemoryData(uint256[] memory _data) public pure returns(uint256[] memory) {
+        if (_data.length > 0) {
+        _data[0] = 1;
+        }
+        return _data;
+    }
+}
+```
